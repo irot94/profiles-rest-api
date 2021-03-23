@@ -2,18 +2,19 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
+import datetime
 
 
 class UserProfileManager(BaseUserManager):
     """Manager for user profiles"""
 
-    def create_user(self, email, name, password=None):
+    def create_user(self, email, name, data, password=None):
         """Create a new user profile"""
         if not email:
             raise ValueError('User must have an email address')
         email = self.normalize_email(email)
-        user = self.model(email=email, name=name)
-
+        user = self.model(email=email, name=name, data=data)
+        #data = datetime.datetime.now().strftime ("%Y%m%d")
         user.set_password(password)
         user.save(using=self._db)
 
@@ -33,8 +34,13 @@ class UserProfileManager(BaseUserManager):
 
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     """Database model for users in the system"""
+
+    class Meta: ## dzieki temu, data i name musza byc rozne jako para (nie moge miec tego samego imienia z ta sama datą)
+        unique_together = ('data', 'name',)
+
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
+    data = models.DateField(default=datetime.datetime.now().strftime ("%Y-%m-%d"))
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
